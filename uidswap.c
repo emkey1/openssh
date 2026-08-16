@@ -41,16 +41,16 @@
    is not part of the posix specification. */
 #define SAVED_IDS_WORK_WITH_SETEUID
 /* Saved effective uid. */
-static uid_t	saved_euid = 0;
-static gid_t	saved_egid = 0;
+static __thread uid_t	saved_euid = 0;
+static __thread gid_t	saved_egid = 0;
 #endif
 
 /* Saved effective uid. */
-static int	privileged = 0;
-static int	temporarily_use_uid_effective = 0;
-static uid_t	user_groups_uid;
-static gid_t	*saved_egroups = NULL, *user_groups = NULL;
-static int	saved_egroupslen = -1, user_groupslen = -1;
+static __thread int	privileged = 0;
+static __thread int	temporarily_use_uid_effective = 0;
+static __thread uid_t	user_groups_uid;
+static __thread gid_t	*saved_egroups = NULL, *user_groups = NULL;
+static __thread int	saved_egroupslen = -1, user_groupslen = -1;
 
 /*
  * Temporarily changes to the given uid.  If the effective user

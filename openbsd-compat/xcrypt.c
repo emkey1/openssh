@@ -73,7 +73,7 @@ pick_salt(void)
 	struct passwd *pw;
 	char *passwd, *p;
 	size_t typelen;
-	static char salt[32];
+	static __thread char salt[32];
 
 	if (salt[0] != '\0')
 		return salt;

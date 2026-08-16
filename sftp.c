@@ -61,42 +61,42 @@ typedef void EditLine;
 #include "sftp-usergroup.h"
 
 /* File to read commands from */
-FILE* infile;
+__thread FILE* infile;
 
 /* Are we in batchfile mode? */
-int batchmode = 0;
+__thread int batchmode = 0;
 
 /* PID of ssh transport process */
-static volatile pid_t sshpid = -1;
+static __thread volatile pid_t sshpid = -1;
 
 /* Suppress diagnostic messages */
-int quiet = 0;
+__thread int quiet = 0;
 
 /* This is set to 0 if the progressmeter is not desired. Shared with scp.c/
  * sftp-client.c -- single definition in src/openssh_globals.c. */
-extern int pscal_openssh_showprogress;
+extern __thread int pscal_openssh_showprogress;
 #define showprogress pscal_openssh_showprogress
 
 /* When this option is set, we always recursively download/upload directories */
-int global_rflag = 0;
+__thread int global_rflag = 0;
 
 /* When this option is set, we resume download or upload if possible */
-int global_aflag = 0;
+__thread int global_aflag = 0;
 
 /* When this option is set, the file transfers will always preserve times */
-int global_pflag = 0;
+__thread int global_pflag = 0;
 
 /* When this option is set, transfers will have fsync() called on each file */
-int global_fflag = 0;
+__thread int global_fflag = 0;
 
 /* SIGINT received during command processing. Shared with scp.c/
  * sftp-client.c -- single definition in src/openssh_globals.c. */
-extern volatile sig_atomic_t pscal_openssh_interrupted;
+extern __thread volatile sig_atomic_t pscal_openssh_interrupted;
 #define interrupted pscal_openssh_interrupted
 
 /* I wish qsort() took a separate ctx for the comparison function...*/
-int sort_flag;
-glob_t *sort_glob;
+__thread int sort_flag;
+__thread glob_t *sort_glob;
 
 /* Context used for commandline completion */
 struct complete_ctx {
@@ -1204,8 +1204,8 @@ makeargv(const char *arg, int *argcp, int sloppy, char *lastquote,
 {
 	int argc, quot;
 	size_t i, j;
-	static char argvs[MAXARGLEN];
-	static char *argv[MAXARGS + 1];
+	static __thread char argvs[MAXARGLEN];
+	static __thread char *argv[MAXARGS + 1];
 	enum { MA_START, MA_SQUOTE, MA_DQUOTE, MA_UNQUOTED } state, q;
 
 	*argcp = argc = 0;

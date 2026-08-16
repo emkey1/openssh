@@ -59,8 +59,8 @@
 #endif
 
 #if SPT_TYPE == SPT_REUSEARGV
-static char *argv_start = NULL;
-static size_t argv_env_len = 0;
+static __thread char *argv_start = NULL;
+static __thread size_t argv_env_len = 0;
 #endif
 
 #endif /* HAVE_SETPROCTITLE */

@@ -80,37 +80,37 @@
 #define DEFAULT_BITS		3072
 #define DEFAULT_BITS_ECDSA	256
 
-static int quiet = 0;
+static __thread int quiet = 0;
 
 /* Flag indicating that we just want to see the key fingerprint */
-static int print_fingerprint = 0;
-static int print_bubblebabble = 0;
+static __thread int print_fingerprint = 0;
+static __thread int print_bubblebabble = 0;
 
 /* Hash algorithm to use for fingerprints. */
-static int fingerprint_hash = SSH_FP_HASH_DEFAULT;
+static __thread int fingerprint_hash = SSH_FP_HASH_DEFAULT;
 
 /* The identity file name, given on the command line or entered by the user. */
-static char identity_file[PATH_MAX];
-static int have_identity = 0;
+static __thread char identity_file[PATH_MAX];
+static __thread int have_identity = 0;
 
 /* This is set to the passphrase if given on the command line. */
-static char *identity_passphrase = NULL;
+static __thread char *identity_passphrase = NULL;
 
 /* This is set to the new passphrase if given on the command line. */
-static char *identity_new_passphrase = NULL;
+static __thread char *identity_new_passphrase = NULL;
 
 /* Key type when certifying */
-static u_int cert_key_type = SSH2_CERT_TYPE_USER;
+static __thread u_int cert_key_type = SSH2_CERT_TYPE_USER;
 
 /* "key ID" of signed key */
-static char *cert_key_id = NULL;
+static __thread char *cert_key_id = NULL;
 
 /* Comma-separated list of principal names for certifying keys */
-static char *cert_principals = NULL;
+static __thread char *cert_principals = NULL;
 
 /* Validity period for certificates */
-static uint64_t cert_valid_from = 0;
-static uint64_t cert_valid_to = ~0ULL;
+static __thread uint64_t cert_valid_from = 0;
+static __thread uint64_t cert_valid_to = ~0ULL;
 
 /* Certificate options */
 #define CERTOPT_X_FWD				(1)
@@ -122,9 +122,9 @@ static uint64_t cert_valid_to = ~0ULL;
 #define CERTOPT_REQUIRE_VERIFY			(1<<6)
 #define CERTOPT_DEFAULT	(CERTOPT_X_FWD|CERTOPT_AGENT_FWD| \
 			 CERTOPT_PORT_FWD|CERTOPT_PTY|CERTOPT_USER_RC)
-static uint32_t certflags_flags = CERTOPT_DEFAULT;
-static char *certflags_command = NULL;
-static char *certflags_src_addr = NULL;
+static __thread uint32_t certflags_flags = CERTOPT_DEFAULT;
+static __thread char *certflags_command = NULL;
+static __thread char *certflags_src_addr = NULL;
 
 /* Arbitrary extensions specified by user */
 struct cert_ext {
@@ -132,37 +132,37 @@ struct cert_ext {
 	char *val;
 	int crit;
 };
-static struct cert_ext *cert_ext;
-static size_t ncert_ext;
+static __thread struct cert_ext *cert_ext;
+static __thread size_t ncert_ext;
 
 /* Conversion to/from various formats */
-enum {
+__thread enum {
 	FMT_RFC4716,
 	FMT_PKCS8,
 	FMT_PEM
 } convert_format = FMT_RFC4716;
 
-static char *key_type_name = NULL;
+static __thread char *key_type_name = NULL;
 
 /* Load key from this PKCS#11 provider */
-static char *pkcs11provider = NULL;
+static __thread char *pkcs11provider = NULL;
 
 /* FIDO/U2F provider to use */
-static char *sk_provider = NULL;
+static __thread char *sk_provider = NULL;
 
 /* Format for writing private keys */
-static int private_key_format = SSHKEY_PRIVATE_OPENSSH;
+static __thread int private_key_format = SSHKEY_PRIVATE_OPENSSH;
 
 /* Cipher for new-format private keys */
-static char *openssh_format_cipher = NULL;
+static __thread char *openssh_format_cipher = NULL;
 
 /* Number of KDF rounds to derive new format keys. */
-static int rounds = 0;
+static __thread int rounds = 0;
 
 /* argv0 */
 extern char *__progname;
 
-static char hostname[NI_MAXHOST];
+static __thread char hostname[NI_MAXHOST];
 
 #ifdef WITH_OPENSSL
 /* moduli.c */

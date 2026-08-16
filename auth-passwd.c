@@ -57,7 +57,7 @@
 #include "auth-options.h"
 
 extern struct sshbuf *loginmsg;
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 #ifdef HAVE_LOGIN_CAP
 extern login_cap_t *lc;

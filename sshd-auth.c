@@ -105,7 +105,7 @@
 extern char *__progname;
 
 /* Server configuration options. */
-ServerOptions options;
+__thread ServerOptions options;
 
 /* Name of the server configuration file. */
 char *config_file_name = _PATH_SERVER_CONFIG_FILE;
@@ -116,7 +116,7 @@ char *config_file_name = _PATH_SERVER_CONFIG_FILE;
  * log, the daemon will not go to background, and will exit after processing
  * the first connection.
  */
-int debug_flag = 0;
+__thread int debug_flag = 0;
 
 /* Flag indicating that the daemon is being started from inetd. */
 static int inetd_flag = 0;

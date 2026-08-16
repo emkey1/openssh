@@ -53,8 +53,8 @@ struct helper {
 	size_t nkeyblobs;
 	struct sshbuf **keyblobs; /* XXX use a tree or something faster */
 };
-static struct helper **helpers;
-static size_t nhelpers;
+static __thread struct helper **helpers;
+static __thread size_t nhelpers;
 
 static struct helper *
 helper_by_provider(const char *path)

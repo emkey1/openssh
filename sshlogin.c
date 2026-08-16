@@ -64,7 +64,7 @@
 #include "servconf.h"
 
 extern struct sshbuf *loginmsg;
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 /*
  * Returns the time when the user last logged in.  Returns 0 if the

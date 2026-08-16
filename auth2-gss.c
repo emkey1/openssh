@@ -50,7 +50,7 @@
 
 #define SSH_GSSAPI_MAX_MECHS	2048
 
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_gssapi;
 
 static int input_gssapi_token(int type, uint32_t plen, struct ssh *ssh);

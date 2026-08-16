@@ -92,7 +92,7 @@
 extern char *__progname;
 
 /* Server configuration options. */
-ServerOptions options;
+__thread ServerOptions options;
 
 /*
  * Debug mode flag.  This can be set on the command line.  If debug
@@ -100,7 +100,7 @@ ServerOptions options;
  * log, the daemon will not go to background, and will exit after processing
  * the first connection.
  */
-int debug_flag = 0;
+__thread int debug_flag = 0;
 
 /* Saved arguments to main(). */
 static char **saved_argv;
@@ -180,7 +180,7 @@ static int children_active;
 
 /* sshd_config buffer */
 struct sshbuf *cfg;
-struct sshbuf *config;	/* packed */
+__thread struct sshbuf *config;	/* packed */
 
 /* Included files from the configuration file */
 struct include_list includes = TAILQ_HEAD_INITIALIZER(includes);

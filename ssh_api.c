@@ -90,7 +90,7 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 	char *populated[PROPOSAL_MAX];
 	struct ssh *ssh;
 	char **proposal;
-	static int called;
+	static __thread int called;
 	int r;
 
 	if (!called) {
