@@ -28,7 +28,7 @@
 #include "hostfile.h"
 #include "auth.h"
 
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 /*
  * Configuration of enabled authentication methods. Separate from the rest of

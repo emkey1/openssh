@@ -114,62 +114,62 @@ extern char *__progname;
 
 /* Saves a copy of argv for setproctitle emulation */
 #ifndef HAVE_SETPROCTITLE
-static char **saved_av;
+static __thread char **saved_av;
 #endif
 
 /* Flag indicating whether debug mode is on.  May be set on the command line. */
-int debug_flag = 0;
+__thread int debug_flag = 0;
 
 /* Flag indicating whether a tty should be requested */
-int tty_flag = 0;
+__thread int tty_flag = 0;
 
 /*
  * Flag indicating that the current process should be backgrounded and
  * a new mux-client launched in the foreground for ControlPersist.
  */
-static int need_controlpersist_detach = 0;
+static __thread int need_controlpersist_detach = 0;
 
 /* Copies of flags for ControlPersist foreground mux-client */
-static int ostdin_null_flag, osession_type, otty_flag, orequest_tty;
-static int ofork_after_authentication;
+static __thread int ostdin_null_flag, osession_type, otty_flag, orequest_tty;
+static __thread int ofork_after_authentication;
 
 /*
  * General data structure for command line options and options configurable
  * in configuration files.  See readconf.h.
  */
-Options options;
+__thread Options options;
 
 /* optional user configfile */
-char *config = NULL;
+__thread char *config = NULL;
 
 /*
  * Name of the host we are connecting to.  This is the name given on the
  * command line, or the Hostname specified for the user-supplied name in a
  * configuration file.
  */
-char *host;
+__thread char *host;
 
 /*
  * A config can specify a path to forward, overriding SSH_AUTH_SOCK. If this is
  * not NULL, forward the socket at this path instead.
  */
-char *forward_agent_sock_path = NULL;
+__thread char *forward_agent_sock_path = NULL;
 
 /* socket address the host resolves to */
-struct sockaddr_storage hostaddr;
+__thread struct sockaddr_storage hostaddr;
 
 /* Private host keys. */
-Sensitive sensitive_data;
+__thread Sensitive sensitive_data;
 
 /* command to be executed */
-struct sshbuf *command;
+__thread struct sshbuf *command;
 
 /* # of replies received for global requests */
-static int forward_confirms_pending = -1;
+static __thread int forward_confirms_pending = -1;
 
 /* mux.c */
-extern int muxserver_sock;
-extern u_int muxclient_command;
+__thread extern int muxserver_sock;
+__thread extern u_int muxclient_command;
 
 /* Prints a help message to the user.  This function never returns. */
 

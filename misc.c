@@ -706,8 +706,8 @@ const char *
 fmt_timeframe(time_t t)
 {
 	char		*buf;
-	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
-	static int	 idx = 0;
+	static __thread char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
+	static __thread int	 idx = 0;
 	unsigned int	 sec, min, hrs, day;
 	unsigned long long	week;
 
@@ -1744,7 +1744,7 @@ monotime_ts(struct timespec *ts)
 	struct timeval tv;
 #if defined(HAVE_CLOCK_GETTIME) && (defined(CLOCK_BOOTTIME) || \
     defined(CLOCK_MONOTONIC) || defined(CLOCK_REALTIME))
-	static int gettime_failed = 0;
+	static __thread int gettime_failed = 0;
 
 	if (!gettime_failed) {
 # ifdef CLOCK_BOOTTIME
@@ -1934,7 +1934,7 @@ const char *
 iptos2str(int iptos)
 {
 	int i;
-	static char iptos_str[sizeof "0xff"];
+	static __thread char iptos_str[sizeof "0xff"];
 
 	for (i = 0; ipqos[i].name != NULL; i++) {
 		if (ipqos[i].value == iptos)
@@ -2424,7 +2424,7 @@ valid_domain(char *name, int makelower, const char **errstr)
 {
 	size_t i, l = strlen(name);
 	u_char c, last = '\0';
-	static char errbuf[256];
+	static __thread char errbuf[256];
 
 	if (l == 0) {
 		strlcpy(errbuf, "empty domain name", sizeof(errbuf));

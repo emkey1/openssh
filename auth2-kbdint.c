@@ -41,7 +41,7 @@
 #include "ssherr.h"
 
 /* import */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_kbdint;
 
 static int

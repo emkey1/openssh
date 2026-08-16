@@ -78,7 +78,7 @@ int found_one = 0;		/* Successfully found a key */
 
 int hashalg = -1;		/* Hash for SSHFP records or -1 for all */
 
-int quiet = 0;			/* Don't print key comment lines */
+__thread int quiet = 0;			/* Don't print key comment lines */
 
 #define MAXMAXFD 256
 

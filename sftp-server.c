@@ -59,7 +59,7 @@ char *sftp_realpath(const char *, char *); /* sftp-realpath.c */
 #define SFTP_MAX_READ_LENGTH (SFTP_MAX_MSG_LENGTH - 1024)
 
 /* Our verbosity */
-static LogLevel log_level = SYSLOG_LEVEL_ERROR;
+__thread static LogLevel log_level = SYSLOG_LEVEL_ERROR;
 
 /* Our client */
 static struct passwd *pw = NULL;

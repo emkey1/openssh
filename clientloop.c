@@ -114,23 +114,23 @@
 #define SSH_KEYSTROKE_TIMING_FUZZ 10
 
 /* import options */
-extern Options options;
+__thread extern Options options;
 
 /* Control socket */
-extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
+__thread extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
 
 /*
  * Name of the host we are connecting to.  This is the name given on the
  * command line, or the Hostname specified for the user-supplied name in a
  * configuration file.
  */
-extern char *host;
+__thread extern char *host;
 
 /*
  * If this field is not NULL, the ForwardAgent socket is this path and different
  * instead of SSH_AUTH_SOCK.
  */
-extern char *forward_agent_sock_path;
+__thread extern char *forward_agent_sock_path;
 
 /*
  * Flag to indicate that we have received a window change signal which has
@@ -138,28 +138,28 @@ extern char *forward_agent_sock_path;
  * window size to be sent to the server a little later.  This is volatile
  * because this is updated in a signal handler.
  */
-static volatile sig_atomic_t received_window_change_signal = 0;
-static volatile sig_atomic_t siginfo_received = 0;
-static volatile sig_atomic_t received_signal = 0; /* exit signals */
+static __thread volatile sig_atomic_t received_window_change_signal = 0;
+static __thread volatile sig_atomic_t siginfo_received = 0;
+static __thread volatile sig_atomic_t received_signal = 0; /* exit signals */
 
 /* Time when backgrounded control master using ControlPersist should exit */
-static time_t control_persist_exit_time = 0;
+static __thread time_t control_persist_exit_time = 0;
 
 /* Common data for the client loop code. */
-volatile sig_atomic_t quit_pending; /* Set non-zero to quit the loop. */
-static int last_was_cr;		/* Last character was a newline. */
-static int exit_status;		/* Used to store the command exit status. */
-static int connection_in;	/* Connection to server (input). */
-static int connection_out;	/* Connection to server (output). */
-static int need_rekeying;	/* Set to non-zero if rekeying is requested. */
-static int session_closed;	/* In SSH2: login session closed. */
-static time_t x11_refuse_time;	/* If >0, refuse x11 opens after this time. */
-static time_t server_alive_time;	/* Time to do server_alive_check */
-static int hostkeys_update_complete;
-static int session_setup_complete;
+__thread volatile sig_atomic_t quit_pending; /* Set non-zero to quit the loop. */
+static __thread int last_was_cr;		/* Last character was a newline. */
+static __thread int exit_status;		/* Used to store the command exit status. */
+static __thread int connection_in;	/* Connection to server (input). */
+static __thread int connection_out;	/* Connection to server (output). */
+static __thread int need_rekeying;	/* Set to non-zero if rekeying is requested. */
+static __thread int session_closed;	/* In SSH2: login session closed. */
+static __thread time_t x11_refuse_time;	/* If >0, refuse x11 opens after this time. */
+static __thread time_t server_alive_time;	/* Time to do server_alive_check */
+static __thread int hostkeys_update_complete;
+static __thread int session_setup_complete;
 
 static void client_init_dispatch(struct ssh *ssh);
-int	session_ident = -1;
+__thread int	session_ident = -1;
 
 /* Track escape per proto2 channel */
 struct escape_filter_ctx {
@@ -183,8 +183,28 @@ struct global_confirm {
 	int ref_count;
 };
 TAILQ_HEAD(global_confirms, global_confirm);
-static struct global_confirms global_confirms =
-    TAILQ_HEAD_INITIALIZER(global_confirms);
+static __thread struct global_confirms global_confirms;
+
+/*
+ * iSH-AOK: global_confirms is thread-local, because a native ssh is a
+ * function call on a guest task's thread and two of them can be live at
+ * once (kernel/native.h). TAILQ_HEAD_INITIALIZER stores
+ * &global_confirms.tqh_first, and the address of a thread-local is not a
+ * compile-time constant, so the head is initialised on first use instead.
+ * Every reference below goes through this: a zeroed head reads as empty
+ * but leaves tqh_last NULL, which TAILQ_LAST() dereferences.
+ */
+static struct global_confirms *
+aok_global_confirms(void)
+{
+	static __thread int inited;
+
+	if (!inited) {
+		TAILQ_INIT(&global_confirms);
+		inited = 1;
+	}
+	return &global_confirms;
+}
 
 static void quit_message(const char *fmt, ...)
     __attribute__((__format__ (printf, 1, 2)));
@@ -294,7 +314,7 @@ client_x11_get_proto(struct ssh *ssh, const char *display,
 {
 	char *cmd, line[512], xdisplay[512];
 	char xauthfile[PATH_MAX], xauthdir[PATH_MAX];
-	static char proto[512], data[512];
+	static __thread char proto[512], data[512];
 	FILE *f;
 	int got_data = 0, generated = 0, do_unlink = 0, r;
 	struct stat st;
@@ -473,12 +493,12 @@ client_global_request_reply(int type, u_int32_t seq, struct ssh *ssh)
 {
 	struct global_confirm *gc;
 
-	if ((gc = TAILQ_FIRST(&global_confirms)) == NULL)
+	if ((gc = TAILQ_FIRST(aok_global_confirms())) == NULL)
 		return 0;
 	if (gc->cb != NULL)
 		gc->cb(ssh, type, seq, gc->ctx);
 	if (--gc->ref_count <= 0) {
-		TAILQ_REMOVE(&global_confirms, gc, entry);
+		TAILQ_REMOVE(aok_global_confirms(), gc, entry);
 		freezero(gc, sizeof(*gc));
 	}
 
@@ -540,7 +560,7 @@ set_next_interval(const struct timespec *now, struct timespec *next_interval,
 {
 	struct timespec tmp;
 	long long interval_ns, fuzz_ns;
-	static long long rate_fuzz;
+	static __thread long long rate_fuzz;
 
 	interval_ns = interval_ms * (1000LL * 1000);
 	fuzz_ns = (interval_ns * SSH_KEYSTROKE_TIMING_FUZZ) / 100;
@@ -578,11 +598,11 @@ static int
 obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout,
     int channel_did_enqueue)
 {
-	static int active;
-	static struct timespec next_interval, chaff_until;
+	static __thread int active;
+	static __thread struct timespec next_interval, chaff_until;
 	struct timespec now, tmp;
 	int just_started = 0, had_keystroke = 0;
-	static unsigned long long nchaff;
+	static __thread unsigned long long nchaff;
 	char *stop_reason = NULL;
 	long long n;
 
@@ -902,7 +922,7 @@ client_register_global_confirm(global_confirm_cb *cb, void *ctx)
 	struct global_confirm *gc, *last_gc;
 
 	/* Coalesce identical callbacks */
-	last_gc = TAILQ_LAST(&global_confirms, global_confirms);
+	last_gc = TAILQ_LAST(aok_global_confirms(), global_confirms);
 	if (last_gc && last_gc->cb == cb && last_gc->ctx == ctx) {
 		if (++last_gc->ref_count >= INT_MAX)
 			fatal_f("last_gc->ref_count = %d",
@@ -914,7 +934,7 @@ client_register_global_confirm(global_confirm_cb *cb, void *ctx)
 	gc->cb = cb;
 	gc->ctx = ctx;
 	gc->ref_count = 1;
-	TAILQ_INSERT_TAIL(&global_confirms, gc, entry);
+	TAILQ_INSERT_TAIL(aok_global_confirms(), gc, entry);
 }
 
 /*
@@ -1119,7 +1139,7 @@ struct escape_help_text {
 	const char *text;
 	unsigned int flags;
 };
-static struct escape_help_text esc_txt[] = {
+static __thread struct escape_help_text esc_txt[] = {
     {".",  "terminate session", SUPPRESS_MUXMASTER},
     {".",  "terminate connection (and any multiplexed sessions)",
 	SUPPRESS_MUXCLIENT},
@@ -2459,8 +2479,8 @@ client_input_hostkeys(struct ssh *ssh)
 	struct sshkey *key = NULL, **tmp;
 	int r, prove_sent = 0;
 	char *fp;
-	static int hostkeys_seen = 0; /* XXX use struct ssh */
-	extern struct sockaddr_storage hostaddr; /* XXX from ssh.c */
+	static __thread int hostkeys_seen = 0; /* XXX use struct ssh */
+	extern __thread struct sockaddr_storage hostaddr; /* XXX from ssh.c */
 	struct hostkeys_update_ctx *ctx = NULL;
 	u_int want;
 

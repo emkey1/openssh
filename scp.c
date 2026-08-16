@@ -134,50 +134,50 @@ int do_cmd(char *, char *, char *, int, int, char *, int *, int *, pid_t *);
 int do_cmd2(char *, char *, int, char *, int, int);
 
 /* Struct for addargs */
-arglist args;
-arglist remote_remote_args;
+__thread arglist args;
+__thread arglist remote_remote_args;
 
 /* Bandwidth limit */
-long long limit_kbps = 0;
-struct bwlimit bwlimit;
+__thread long long limit_kbps = 0;
+__thread struct bwlimit bwlimit;
 
 /* Name of current file being transferred. */
-char *curfile;
+__thread char *curfile;
 
 /* This is set to non-zero to enable verbose mode. */
-int verbose_mode = 0;
-LogLevel log_level = SYSLOG_LEVEL_INFO;
+__thread int verbose_mode = 0;
+__thread LogLevel log_level = SYSLOG_LEVEL_INFO;
 
 /* This is set to zero if the progressmeter is not desired. scp.c and sftp.c
  * are both linked into the same smallclue binary, so this can't be a
  * plain file-scope global in each -- it has to be the single shared
  * definition in src/openssh_globals.c, aliased here by macro. */
-extern int pscal_openssh_showprogress;
+extern __thread int pscal_openssh_showprogress;
 #define showprogress pscal_openssh_showprogress
 
 /*
  * This is set to non-zero if remote-remote copy should be piped
  * through this process.
  */
-int throughlocal = 1;
+__thread int throughlocal = 1;
 
 /* Non-standard port to use for the ssh connection or -1. */
-int sshport = -1;
+__thread int sshport = -1;
 
 /* This is the program to execute for the secure connection. ("ssh" or -S) */
-char *ssh_program = _PATH_SSH_PROGRAM;
+__thread char *ssh_program = _PATH_SSH_PROGRAM;
 
 /* This is used to store the pid of ssh_program */
-pid_t do_cmd_pid = -1;
-pid_t do_cmd_pid2 = -1;
+__thread pid_t do_cmd_pid = -1;
+__thread pid_t do_cmd_pid2 = -1;
 
 /* SFTP copy parameters */
-size_t sftp_copy_buflen;
-size_t sftp_nrequests;
+__thread size_t sftp_copy_buflen;
+__thread size_t sftp_nrequests;
 
 /* Needed for sftp. Shared with sftp.c/sftp-client.c for the same reason as
  * showprogress above -- single definition in src/openssh_globals.c. */
-extern volatile sig_atomic_t pscal_openssh_interrupted;
+extern __thread volatile sig_atomic_t pscal_openssh_interrupted;
 #define interrupted pscal_openssh_interrupted
 
 int sftp_glob(struct sftp_conn *, const char *, int,
@@ -436,13 +436,13 @@ int note_err(const char *,...)
     __attribute__((__format__ (printf, 1, 2)));
 void verifydir(char *);
 
-struct passwd *pwd;
-uid_t userid;
-int errs, remin, remout, remin2, remout2;
-int Tflag, pflag, iamremote, iamrecursive, targetshouldbedirectory;
+__thread struct passwd *pwd;
+__thread uid_t userid;
+__thread int errs, remin, remout, remin2, remout2;
+__thread int Tflag, pflag, iamremote, iamrecursive, targetshouldbedirectory;
 
 #define	CMDNEEDS	64
-char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
+__thread char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
 enum scp_mode_e {
 	MODE_SCP,
@@ -1392,7 +1392,7 @@ void
 source(int argc, char **argv)
 {
 	struct stat stb;
-	static BUF buffer;
+	static __thread BUF buffer;
 	BUF *bp;
 	off_t i, statbytes;
 	size_t amt, nr;
@@ -1661,7 +1661,7 @@ out:
 void
 sink(int argc, char **argv, const char *src)
 {
-	static BUF buffer;
+	static __thread BUF buffer;
 	struct stat stb;
 	BUF *bp;
 	off_t i;
@@ -1828,8 +1828,8 @@ sink(int argc, char **argv, const char *src)
 			}
 		}
 		if (targisdir) {
-			static char *namebuf;
-			static size_t cursize;
+			static __thread char *namebuf;
+			static __thread size_t cursize;
 			size_t need;
 
 			need = strlen(targ) + strlen(cp) + 250;
@@ -2126,7 +2126,7 @@ usage(void)
 void
 run_err(const char *fmt,...)
 {
-	static FILE *fp;
+	static __thread FILE *fp;
 	va_list ap;
 
 	++errs;
@@ -2156,7 +2156,7 @@ run_err(const char *fmt,...)
 int
 note_err(const char *fmt, ...)
 {
-	static char *emsg;
+	static __thread char *emsg;
 	va_list ap;
 
 	/* Replay any previously-noted error */

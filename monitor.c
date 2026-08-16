@@ -93,7 +93,7 @@ static Gssctxt *gsscontext = NULL;
 #endif
 
 /* Imports */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern u_int utmp_len;
 extern struct sshbuf *cfg;
 extern struct sshbuf *loginmsg;

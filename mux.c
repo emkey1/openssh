@@ -62,11 +62,11 @@
 #include "ssherr.h"
 
 /* from ssh.c */
-extern int tty_flag;
-extern Options options;
-extern char *host;
-extern struct sshbuf *command;
-extern volatile sig_atomic_t quit_pending;
+__thread extern int tty_flag;
+__thread extern Options options;
+__thread extern char *host;
+__thread extern struct sshbuf *command;
+__thread extern volatile sig_atomic_t quit_pending;
 
 /* Context for session open confirmation callback */
 struct mux_session_confirm_ctx {
@@ -94,21 +94,21 @@ struct mux_channel_confirm_ctx {
 };
 
 /* fd to control socket */
-int muxserver_sock = -1;
+__thread int muxserver_sock = -1;
 
 /* client request id */
-u_int muxclient_request_id = 0;
+__thread u_int muxclient_request_id = 0;
 
 /* Multiplexing control command */
-u_int muxclient_command = 0;
+__thread u_int muxclient_command = 0;
 
 /* Set when signalled. */
-static volatile sig_atomic_t muxclient_terminate = 0;
+static __thread volatile sig_atomic_t muxclient_terminate = 0;
 
 /* PID of multiplex server */
-static u_int muxserver_pid = 0;
+static __thread u_int muxserver_pid = 0;
 
-static Channel *mux_listener_channel = NULL;
+static __thread Channel *mux_listener_channel = NULL;
 
 struct mux_master_state {
 	int hello_rcvd;

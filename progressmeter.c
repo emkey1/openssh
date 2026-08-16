@@ -59,18 +59,18 @@ static void setscreensize(void);
 /* signal handler for updating the progress meter */
 static void sig_alarm(int);
 
-static double start;		/* start progress */
-static double last_update;	/* last progress update */
-static const char *file;	/* name of the file being transferred */
-static off_t start_pos;		/* initial position of transfer */
-static off_t end_pos;		/* ending position of transfer */
-static off_t cur_pos;		/* transfer position as of last refresh */
-static volatile off_t *counter;	/* progress counter */
-static long stalled;		/* how long we have been stalled */
-static int bytes_per_second;	/* current speed in bytes per second */
-static int win_size;		/* terminal window size */
-static volatile sig_atomic_t win_resized; /* for window resizing */
-static volatile sig_atomic_t alarm_fired;
+static __thread double start;		/* start progress */
+static __thread double last_update;	/* last progress update */
+static __thread const char *file;	/* name of the file being transferred */
+static __thread off_t start_pos;		/* initial position of transfer */
+static __thread off_t end_pos;		/* ending position of transfer */
+static __thread off_t cur_pos;		/* transfer position as of last refresh */
+static __thread volatile off_t *counter;	/* progress counter */
+static __thread long stalled;		/* how long we have been stalled */
+static __thread int bytes_per_second;	/* current speed in bytes per second */
+static __thread int win_size;		/* terminal window size */
+static __thread volatile sig_atomic_t win_resized; /* for window resizing */
+static __thread volatile sig_atomic_t alarm_fired;
 
 /* units for format_size */
 static const char unit[] = " KMGT";
@@ -88,7 +88,7 @@ static const char *
 format_rate(off_t bytes)
 {
 	int i;
-	static char buf[STRING_SIZE(bytes) * 2 + 16];
+	static __thread char buf[STRING_SIZE(bytes) * 2 + 16];
 
 	bytes *= 100;
 	for (i = 0; bytes >= 100*1000 && unit[i] != 'T'; i++)
@@ -109,7 +109,7 @@ static const char *
 format_size(off_t bytes)
 {
 	int i;
-	static char buf[STRING_SIZE(bytes) + 16];
+	static __thread char buf[STRING_SIZE(bytes) + 16];
 
 	for (i = 0; bytes >= 10000 && unit[i] != 'T'; i++)
 		bytes = (bytes + 512) / 1024;

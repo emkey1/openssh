@@ -32,7 +32,7 @@
 
 #include "openbsd-compat/openbsd-compat.h"
 
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 /* return 1 if we are running with privilege to swap UIDs, 0 otherwise */
 int

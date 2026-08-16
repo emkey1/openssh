@@ -894,7 +894,7 @@ choose_hostkeyalg(struct kex *k, char *client, char *server)
 static int
 proposals_match(char *my[PROPOSAL_MAX], char *peer[PROPOSAL_MAX])
 {
-	static int check[] = {
+	static __thread int check[] = {
 		PROPOSAL_KEX_ALGS, PROPOSAL_SERVER_HOST_KEY_ALGS, -1
 	};
 	int *idx;

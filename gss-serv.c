@@ -48,7 +48,7 @@
 
 #include "ssh-gss.h"
 
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 static ssh_gssapi_client gssapi_client =
     { GSS_C_EMPTY_BUFFER, GSS_C_EMPTY_BUFFER,

@@ -80,15 +80,15 @@
 #endif
 
 /* import */
-extern Options options;
+__thread extern Options options;
 
 /*
  * SSH2 key exchange
  */
 
-static char *xxx_host;
-static struct sockaddr *xxx_hostaddr;
-static const struct ssh_conn_info *xxx_conn_info;
+static __thread char *xxx_host;
+static __thread struct sockaddr *xxx_hostaddr;
+static __thread const struct ssh_conn_info *xxx_conn_info;
 
 static int
 verify_host_key_callback(struct sshkey *hostkey, struct ssh *ssh)
@@ -383,34 +383,39 @@ static Authmethod *authmethod_get(char *authlist);
 static Authmethod *authmethod_lookup(const char *name);
 static char *authmethods_get(void);
 
-Authmethod authmethods[] = {
+/*
+ * iSH-AOK: the `enabled` and `batch_flag` columns read &options.something
+ * upstream. They are NULL here and filled in by aok_fix_authmethods() below,
+ * once per thread -- see the comment there.
+ */
+__thread Authmethod authmethods[] = {
 #ifdef GSSAPI
 	{"gssapi-with-mic",
 		userauth_gssapi,
 		userauth_gssapi_cleanup,
-		&options.gss_authentication,
+		NULL,		/* &options.gss_authentication */
 		NULL},
 #endif
 	{"hostbased",
 		userauth_hostbased,
 		NULL,
-		&options.hostbased_authentication,
+		NULL,		/* &options.hostbased_authentication */
 		NULL},
 	{"publickey",
 		userauth_pubkey,
 		NULL,
-		&options.pubkey_authentication,
+		NULL,		/* &options.pubkey_authentication */
 		NULL},
 	{"keyboard-interactive",
 		userauth_kbdint,
 		NULL,
-		&options.kbd_interactive_authentication,
-		&options.batch_mode},
+		NULL,		/* &options.kbd_interactive_authentication */
+		NULL},		/* &options.batch_mode */
 	{"password",
 		userauth_passwd,
 		NULL,
-		&options.password_authentication,
-		&options.batch_mode},
+		NULL,		/* &options.password_authentication */
+		NULL},		/* &options.batch_mode */
 	{"none",
 		userauth_none,
 		NULL,
@@ -419,6 +424,40 @@ Authmethod authmethods[] = {
 	{NULL, NULL, NULL, NULL, NULL}
 };
 
+/*
+ * iSH-AOK: the `enabled` and `batch_flag` entries above used to be
+ * &options.something. `options` is thread-local now -- a native ssh is a
+ * function call on a guest task's thread, and two of them can be live at once
+ * (kernel/native.h) -- and the address of a thread-local is not a compile-time
+ * constant, so those pointers are filled in here instead, once per thread.
+ *
+ * The assignments below are in the table's order and under the table's #if
+ * lines; that is the only thing keeping the indices in step with it, so a new
+ * method has to be added in both places. Same shape as bash's
+ * aok_fix_o_options() -- see deps/bash/aok_fork.c.
+ */
+static void
+aok_fix_authmethods(void)
+{
+	static __thread int aok_done;
+	int i = 0;
+
+	if (aok_done)
+		return;
+	aok_done = 1;
+
+#ifdef GSSAPI
+	authmethods[i++].enabled = &options.gss_authentication;
+#endif
+	authmethods[i++].enabled = &options.hostbased_authentication;
+	authmethods[i++].enabled = &options.pubkey_authentication;
+	authmethods[i].batch_flag = &options.batch_mode;
+	authmethods[i++].enabled = &options.kbd_interactive_authentication;
+	authmethods[i].batch_flag = &options.batch_mode;
+	authmethods[i++].enabled = &options.password_authentication;
+	/* "none" enables unconditionally, and the terminator has no fields. */
+}
+
 void
 ssh_userauth2(struct ssh *ssh, const char *local_user,
     const char *server_user, char *host, Sensitive *sensitive)
@@ -426,6 +465,7 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 	Authctxt authctxt;
 	int r;
 
+	aok_fix_authmethods();
 	if (options.preferred_authentications == NULL)
 		options.preferred_authentications = authmethods_get();
 
@@ -1861,7 +1901,7 @@ userauth_pubkey(struct ssh *ssh)
 	Identity *id;
 	int sent = 0;
 	char *ident;
-	static int prepared;
+	static __thread int prepared;
 
 	if (!prepared) {
 		pubkey_prepare(ssh, authctxt);
@@ -2283,6 +2323,8 @@ static Authmethod *
 authmethod_lookup(const char *name)
 {
 	Authmethod *method = NULL;
+
+	aok_fix_authmethods();
 	if (name != NULL)
 		for (method = authmethods; method->name != NULL; method++)
 			if (strcmp(name, method->name) == 0)
@@ -2292,9 +2334,9 @@ authmethod_lookup(const char *name)
 }
 
 /* XXX internal state */
-static Authmethod *current = NULL;
-static char *supported = NULL;
-static char *preferred = NULL;
+static __thread Authmethod *current = NULL;
+static __thread char *supported = NULL;
+static __thread char *preferred = NULL;
 
 /*
  * Given the authentication method list sent by the server, return the
@@ -2351,6 +2393,7 @@ authmethods_get(void)
 
 	if ((b = sshbuf_new()) == NULL)
 		fatal_f("sshbuf_new failed");
+	aok_fix_authmethods();
 	for (method = authmethods; method->name != NULL; method++) {
 		if (authmethod_is_enabled(method)) {
 			if ((r = sshbuf_putf(b, "%s%s",
