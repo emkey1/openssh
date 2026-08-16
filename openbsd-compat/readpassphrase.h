@@ -22,12 +22,20 @@
 
 /* OPENBSD ORIGINAL: include/readpassphrase.h */
 
-#ifndef _READPASSPHRASE_H_
-#define _READPASSPHRASE_H_
-
 #include "includes.h"
 
-#ifndef HAVE_READPASSPHRASE
+#ifdef HAVE_READPASSPHRASE
+/* This directory is on the include search path ahead of the system's own
+ * readpassphrase.h, so a bare #include <readpassphrase.h> anywhere in the
+ * tree would otherwise resolve to this compat shim instead of the real
+ * header even when the platform provides one. Forward to the next
+ * readpassphrase.h on the search path (the system one). Deliberately no
+ * _READPASSPHRASE_H_ guard around this branch: the system header has its
+ * own guard, and defining the same macro name here would make its content
+ * get skipped as "already included" without ever having been seen. */
+#include_next <readpassphrase.h>
+#elif !defined(_READPASSPHRASE_H_)
+#define _READPASSPHRASE_H_
 
 #define RPP_ECHO_OFF    0x00		/* Turn off echo (default). */
 #define RPP_ECHO_ON     0x01		/* Leave echo on. */
@@ -40,5 +48,3 @@
 char * readpassphrase(const char *, char *, size_t, int);
 
 #endif /* HAVE_READPASSPHRASE */
-
-#endif /* !_READPASSPHRASE_H_ */

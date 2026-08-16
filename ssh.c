@@ -682,7 +682,7 @@ valid_ruser(const char *s)
  * Main program for the ssh client.
  */
 int
-main(int ac, char **av)
+pscal_openssh_ssh_main(int ac, char **av)
 {
 	struct ssh *ssh = NULL;
 	int i, r, opt, exit_status, use_syslog, direct, timeout_ms;

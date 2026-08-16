@@ -34,7 +34,14 @@
 
 /* OPENBSD ORIGINAL: include/fnmatch.h */
 
-#ifndef HAVE_FNMATCH_H
+#ifdef HAVE_FNMATCH_H
+/* This directory is on the include search path ahead of the system's own
+ * fnmatch.h, so a bare #include <fnmatch.h> anywhere in the tree would
+ * otherwise resolve to this compat shim instead of the real header even
+ * when the platform provides one. Forward to the next fnmatch.h on the
+ * search path (the system one) so its declarations are actually visible. */
+#include_next <fnmatch.h>
+#else
 /* Ensure we define FNM_CASEFOLD */
 #define __BSD_VISIBLE 1
 
@@ -63,4 +70,4 @@ int	 fnmatch(const char *, const char *, int);
 /* __END_DECLS */
 
 #endif /* !_FNMATCH_H_ */
-#endif /* ! HAVE_FNMATCH_H */
+#endif /* HAVE_FNMATCH_H */
