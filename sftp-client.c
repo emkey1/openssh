@@ -53,8 +53,10 @@
 #include "sftp-common.h"
 #include "sftp-client.h"
 
-extern volatile sig_atomic_t interrupted;
-extern int showprogress;
+extern volatile sig_atomic_t pscal_openssh_interrupted;
+#define interrupted pscal_openssh_interrupted
+extern int pscal_openssh_showprogress;
+#define showprogress pscal_openssh_showprogress
 
 /* Default size of buffer for up/download (fix sftp.1 scp.1 if changed) */
 #define DEFAULT_COPY_BUFLEN	32768

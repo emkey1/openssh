@@ -72,8 +72,10 @@ static volatile pid_t sshpid = -1;
 /* Suppress diagnostic messages */
 int quiet = 0;
 
-/* This is set to 0 if the progressmeter is not desired. */
-int showprogress = 1;
+/* This is set to 0 if the progressmeter is not desired. Shared with scp.c/
+ * sftp-client.c -- single definition in src/openssh_globals.c. */
+extern int pscal_openssh_showprogress;
+#define showprogress pscal_openssh_showprogress
 
 /* When this option is set, we always recursively download/upload directories */
 int global_rflag = 0;
@@ -87,8 +89,10 @@ int global_pflag = 0;
 /* When this option is set, transfers will have fsync() called on each file */
 int global_fflag = 0;
 
-/* SIGINT received during command processing */
-volatile sig_atomic_t interrupted = 0;
+/* SIGINT received during command processing. Shared with scp.c/
+ * sftp-client.c -- single definition in src/openssh_globals.c. */
+extern volatile sig_atomic_t pscal_openssh_interrupted;
+#define interrupted pscal_openssh_interrupted
 
 /* I wish qsort() took a separate ctx for the comparison function...*/
 int sort_flag;
@@ -2460,7 +2464,7 @@ usage(void)
 }
 
 int
-main(int argc, char **argv)
+pscal_openssh_sftp_main(int argc, char **argv)
 {
 	int r, in, out, ch, err, tmp, port = -1, noisy = 0;
 	char *host = NULL, *user, *cp, **cpp, *file2 = NULL;

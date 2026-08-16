@@ -72,6 +72,8 @@
  */
 
 #include "includes.h"
+void scp_cleanup_exit(int);
+void scp_scp_cleanup_exit(int);
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -140,8 +142,12 @@ char *curfile;
 int verbose_mode = 0;
 LogLevel log_level = SYSLOG_LEVEL_INFO;
 
-/* This is set to zero if the progressmeter is not desired. */
-int showprogress = 1;
+/* This is set to zero if the progressmeter is not desired. scp.c and sftp.c
+ * are both linked into the same smallclue binary, so this can't be a
+ * plain file-scope global in each -- it has to be the single shared
+ * definition in src/openssh_globals.c, aliased here by macro. */
+extern int pscal_openssh_showprogress;
+#define showprogress pscal_openssh_showprogress
 
 /*
  * This is set to non-zero if remote-remote copy should be piped
@@ -163,8 +169,10 @@ pid_t do_cmd_pid2 = -1;
 size_t sftp_copy_buflen;
 size_t sftp_nrequests;
 
-/* Needed for sftp */
-volatile sig_atomic_t interrupted = 0;
+/* Needed for sftp. Shared with sftp.c/sftp-client.c for the same reason as
+ * showprogress above -- single definition in src/openssh_globals.c. */
+extern volatile sig_atomic_t pscal_openssh_interrupted;
+#define interrupted pscal_openssh_interrupted
 
 int sftp_glob(struct sftp_conn *, const char *, int,
     int (*)(const char *, int), glob_t *); /* proto for sftp-glob.c */
@@ -448,7 +456,7 @@ void throughlocal_sftp(struct sftp_conn *, struct sftp_conn *,
     char *, char *);
 
 int
-main(int argc, char **argv)
+pscal_openssh_scp_main(int argc, char **argv)
 {
 	int ch, fflag, tflag, status, r, n;
 	char **newargv, *argv0;
@@ -1344,14 +1352,14 @@ source_sftp(int argc, char *src, char *targ, struct sftp_conn *conn)
 	 * the expansions
 	 */
 	if ((target = prepare_remote_path(conn, targ)) == NULL)
-		cleanup_exit(255);
+		scp_scp_cleanup_exit(255);
 	target_is_dir = sftp_remote_is_dir(conn, target);
 	if (targetshouldbedirectory && !target_is_dir) {
 		debug("target directory \"%s\" does not exist", target);
 		a.flags = SSH2_FILEXFER_ATTR_PERMISSIONS;
 		a.perm = st.st_mode | 0700; /* ensure writable */
 		if (sftp_mkdir(conn, target, &a, 1) != 0)
-			cleanup_exit(255); /* error already logged */
+			scp_scp_cleanup_exit(255); /* error already logged */
 		target_is_dir = 1;
 	}
 	if (target_is_dir)
@@ -1996,7 +2004,7 @@ throughlocal_sftp(struct sftp_conn *from, struct sftp_conn *to,
 
 	if ((abs_src = prepare_remote_path(from, src)) == NULL ||
 	    (target = prepare_remote_path(to, targ)) == NULL)
-		cleanup_exit(255);
+		scp_scp_cleanup_exit(255);
 	memset(&g, 0, sizeof(g));
 
 	targetisdir = sftp_remote_is_dir(to, target);
@@ -2259,7 +2267,7 @@ lostconn(int signo)
 }
 
 void
-cleanup_exit(int i)
+scp_scp_cleanup_exit(int i)
 {
 	if (remin > 0)
 		close(remin);
