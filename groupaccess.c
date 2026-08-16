@@ -39,8 +39,8 @@
 #include "match.h"
 #include "log.h"
 
-static int ngroups;
-static char **groups_byname;
+static __thread int ngroups;
+static __thread char **groups_byname;
 
 /*
  * Initialize group access list for user with primary (base) and

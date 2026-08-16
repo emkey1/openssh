@@ -81,7 +81,7 @@
 /* Imports */
 extern struct monitor *pmonitor;
 extern struct sshbuf *loginmsg;
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 void
 mm_log_handler(LogLevel level, int forced, const char *msg, void *ctx)

@@ -46,7 +46,12 @@
 #  define _POSIX_VDISABLE       VDISABLE
 #endif
 
-static volatile sig_atomic_t signo[_NSIG];
+/* iSH-AOK: per task. A native program is a C function on a guest task's
+   thread, not a process, so two programs reading a passphrase at once would
+   share this. The shim delivers a native program's signals on its OWN thread
+   (kernel/native.c's native_checkpoint -> nlibc_deliver_signals), so
+   thread-local is correct here and not merely tidy. */
+static __thread volatile sig_atomic_t signo[_NSIG];
 
 static void handler(int);
 

@@ -101,7 +101,7 @@
 #include "monitor_wrap.h"
 #include "srclimit.h"
 
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct sshbuf *loginmsg;
 extern u_int utmp_len;
 

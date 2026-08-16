@@ -36,12 +36,12 @@
 #include "servconf.h"
 #include "match.h"
 
-static int max_children, max_persource, ipv4_masklen, ipv6_masklen;
-static struct per_source_penalty penalty_cfg;
-static char *penalty_exempt;
+static __thread int max_children, max_persource, ipv4_masklen, ipv6_masklen;
+static __thread struct per_source_penalty penalty_cfg;
+static __thread char *penalty_exempt;
 
 /* Per connection state, used to enforce unauthenticated connection limit. */
-static struct child_info {
+static __thread struct child_info {
 	int id;
 	struct xaddr addr;
 } *children;
@@ -61,11 +61,11 @@ struct penalty {
 };
 static int penalty_addr_cmp(struct penalty *a, struct penalty *b);
 static int penalty_expiry_cmp(struct penalty *a, struct penalty *b);
-RB_HEAD(penalties_by_addr, penalty) penalties_by_addr4, penalties_by_addr6;
-RB_HEAD(penalties_by_expiry, penalty) penalties_by_expiry4, penalties_by_expiry6;
+__thread RB_HEAD(penalties_by_addr, penalty) penalties_by_addr4, penalties_by_addr6;
+__thread RB_HEAD(penalties_by_expiry, penalty) penalties_by_expiry4, penalties_by_expiry6;
 RB_GENERATE_STATIC(penalties_by_addr, penalty, by_addr, penalty_addr_cmp)
 RB_GENERATE_STATIC(penalties_by_expiry, penalty, by_expiry, penalty_expiry_cmp)
-static size_t npenalties4, npenalties6;
+static __thread size_t npenalties4, npenalties6;
 
 static int
 srclimit_mask_addr(const struct xaddr *addr, int bits, struct xaddr *masked)

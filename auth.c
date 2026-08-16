@@ -75,7 +75,7 @@
 #include "channels.h"
 
 /* import */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct include_list includes;
 extern struct sshbuf *loginmsg;
 extern struct passwd *privsep_pw;

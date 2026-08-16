@@ -60,7 +60,7 @@
 #include "kex.h"
 
 /* import */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct sshbuf *loginmsg;
 
 /* methods */
@@ -74,7 +74,7 @@ extern Authmethod method_hostbased;
 extern Authmethod method_gssapi;
 #endif
 
-Authmethod *authmethods[] = {
+__thread Authmethod *authmethods[] = {
 	&method_none,
 	&method_pubkey,
 #ifdef GSSAPI

@@ -329,7 +329,7 @@ static const char *lookup_opcode_name(OpCodes code);
 const char *
 kex_default_pk_alg(void)
 {
-	static char *pkalgs;
+	static __thread char *pkalgs;
 
 	if (pkalgs == NULL) {
 		char *all_key;
@@ -508,7 +508,7 @@ add_identity_file(Options *options, const char *dir, const char *filename,
 int
 default_ssh_port(void)
 {
-	static int port;
+	static __thread int port;
 	struct servent *sp;
 
 	if (port == 0) {

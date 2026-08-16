@@ -156,7 +156,7 @@ mac_compute(struct sshmac *mac, uint32_t seqno,
     const u_char *data, int datalen,
     u_char *digest, size_t dlen)
 {
-	static union {
+	static __thread union {
 		u_char m[SSH_DIGEST_MAX_LENGTH];
 		uint64_t for_align;
 	} u;

@@ -47,7 +47,7 @@
 #include "servconf.h"
 
 /* import */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 
 static int auth2_challenge_start(struct ssh *);
 static int send_userauth_info_request(struct ssh *);

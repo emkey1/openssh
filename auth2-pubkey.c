@@ -70,7 +70,7 @@
 #include "sk-api.h"
 
 /* import */
-extern ServerOptions options;
+__thread extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_pubkey;
 
 static char *

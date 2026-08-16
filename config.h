@@ -337,7 +337,18 @@
 /* #undef HAVE_CYGWIN */
 
 /* Define if your libraries define daemon() */
-#define HAVE_DAEMON 1
+/* iSH-AOK: undefined by hand, and a define is the right lever here rather than
+   a shim entry. The host HAS daemon(), and it calls the host's fork() -- which
+   on the macOS CLI forks the WHOLE ish process, giving a second emulator that
+   shares the guest's descriptors and rootfs handles, and on iOS produces a
+   child that is not viable. Either way the guest task is not backgrounded.
+   Callers: ssh.c control_persist_detach() and fork_postauth() (`ssh -f`), and
+   mux.c. openbsd-compat/daemon.c is a drop-in replacement built from fork,
+   setsid, open("/dev/null") and dup2 -- all four already routed through
+   kernel/native_libc.h -- so undefining this substitutes a daemon() made
+   entirely of guest calls. nlibc_fork still answers ENOSYS today, so `ssh -f`
+   fails honestly instead of forking the app. */
+/* #undef HAVE_DAEMON */
 
 /* Define to 1 if you have the declaration of `AI_NUMERICSERV', and to 0 if
    you don't. */
@@ -724,7 +735,17 @@
 #define HAVE_GETOPT_OPTRESET 1
 
 /* Define if your libraries define getpagesize() */
-#define HAVE_GETPAGESIZE 1
+/* iSH-AOK: undefined by hand. This is the one symbol in the set whose host and
+   guest answers genuinely differ (16384 on an arm64 Mac, 4096 in the guest)
+   without anything guest-visible depending on the difference: the only caller
+   is openbsd-compat/recallocarray.c:65, where it is half of a heuristic
+   deciding how eagerly a shrunk allocation's tail gets zeroed. Undefining it
+   anyway, rather than arguing that on tools/check-native-libc.py's PURE list,
+   because openbsd-compat/bsd-getpagesize.c answers from the already-routed
+   sysconf(_SC_PAGESIZE) and costs nothing -- and an entry on PURE would have to
+   be re-argued the next time a caller appears. Fewer subtle arguments is the
+   whole point of the gate. */
+/* #undef HAVE_GETPAGESIZE */
 
 /* Define to 1 if you have the `getpeereid' function. */
 #define HAVE_GETPEEREID 1
@@ -1398,7 +1419,19 @@
 #define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the `strmode' function. */
-#define HAVE_STRMODE 1
+/* iSH-AOK: undefined so openbsd-compat/strmode.c is used, the same one the
+   guest's own emulated ssh has. The host's differs: measured over all 65536
+   modes, Darwin's strmode and openbsd's disagree on exactly 4096 of them --
+   every one with type nibble 0160000, which Darwin renders as its own S_IFWHT
+   (whiteout) and openbsd does not.
+   The justification for leaving this on the host was that the guest never
+   produces such a mode, and that guard is void: sftp-common.c takes st_mode
+   from the SFTP wire raw (`st->st_mode = a->perm;`) and formats it with
+   strmode, so the producer is the REMOTE PEER, not the guest. `sftp ls`
+   against a server that reports one would print a different line here than
+   the emulated client does. Cheaper to make the answer ours than to argue
+   about which peers exist. */
+/* #undef HAVE_STRMODE */
 
 /* Define to 1 if you have the `strndup' function. */
 #define HAVE_STRNDUP 1
