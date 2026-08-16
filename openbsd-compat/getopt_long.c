@@ -50,6 +50,15 @@
  */
 
 /* OPENBSD ORIGINAL: lib/libc/stdlib/getopt_long.c */
+/* This file defines its own struct option/getopt_long/getopt_long_only
+ * (guarded below by !HAVE_GETOPT || !HAVE_GETOPT_OPTRESET) whenever the
+ * platform lacks BSD optreset -- true on glibc. includes.h pulls in this
+ * same directory's own getopt.h too (via openbsd-compat.h), which in its
+ * fallback branch also defines that struct for OTHER consumers (notably
+ * openrsync) that never define it themselves. Without this sentinel both
+ * copies land in this one translation unit -- a real redefinition, not a
+ * redundant-but-harmless one. */
+#define SMALLCLUE_GETOPT_LONG_C_OWN_STRUCT_OPTION 1
 #include "includes.h"
 
 #if !defined(HAVE_GETOPT) || !defined(HAVE_GETOPT_OPTRESET)

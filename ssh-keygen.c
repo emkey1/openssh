@@ -3351,7 +3351,7 @@ usage(void)
  * Main program for key management.
  */
 int
-main(int argc, char **argv)
+pscal_openssh_ssh_keygen_main(int argc, char **argv)
 {
 	char comment[KEY_COMMENT_MAX], *passphrase = NULL;
 	char *rr_hostname = NULL, *ep, *fp, *ra;

@@ -32,7 +32,9 @@
 #include <limits.h>
 #include <libgen.h>
 #include <poll.h>
+#ifdef HAVE_NLIST_H
 #include <nlist.h>
+#endif
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
