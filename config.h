@@ -916,7 +916,7 @@
 /* #undef HAVE_LIBPAM */
 
 /* Define to 1 if you have the <libproc.h> header file. */
-#define HAVE_LIBPROC_H 1
+/* #undef HAVE_LIBPROC_H */
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
@@ -955,7 +955,14 @@
 #define HAVE_LOCALTIME_R 1
 
 /* Define to 1 if you have the `login' function. */
-#define HAVE_LOGIN 1
+/* iSH-AOK: undefined by hand, against a config.h that autoconf generated on
+   macOS. This one config.h serves BOTH the macOS build and the iOS app, and
+   these three exist on macOS but not in the iOS SDK. Nothing here needs them:
+   utmp/wtmp login accounting is sshd's, and every file that touches it
+   (loginrec.c, session.c, monitor.c, sshd-auth.c, auth-pam.c) is excluded from
+   this build as server-only. Leaving them defined broke the iOS build at
+   includes.h:70 with "'utmp.h' file not found". */
+/* #undef HAVE_LOGIN */
 
 /* Define to 1 if you have the <login_cap.h> header file. */
 /* #undef HAVE_LOGIN_CAP_H */
@@ -973,7 +980,7 @@
 #define HAVE_LOGOUT 1
 
 /* Define to 1 if you have the `logwtmp' function. */
-#define HAVE_LOGWTMP 1
+/* #undef HAVE_LOGWTMP */
 
 /* Define to 1 if the system has the type `long double'. */
 #define HAVE_LONG_DOUBLE 1
@@ -1028,7 +1035,7 @@
 /* #undef HAVE_NET_IF_TUN_H */
 
 /* Define to 1 if you have the <net/route.h> header file. */
-#define HAVE_NET_ROUTE_H 1
+/* #undef HAVE_NET_ROUTE_H */
 
 /* Define if you are on NeXT */
 /* #undef HAVE_NEXT */
@@ -1043,7 +1050,21 @@
 /* #undef HAVE_NLIST */
 
 /* Define to 1 if you have the <nlist.h> header file. */
-#define HAVE_NLIST_H 1
+/* iSH-AOK: undefined by hand. This config.h is generated on macOS and serves
+   BOTH the macOS build and the iOS app; these headers exist on macOS and not in
+   the iOS SDK. Each is safe to drop here:
+     nlist.h      misc.c includes it but uses nothing from it on this platform
+     libproc.h    bsd-closefrom.c's proc_pidinfo() fast path; it falls back to
+                  walking /dev/fd, which is what every other platform does
+     sys/random.h only gates getrandom(2), which iOS does not export at all --
+                  getentropy and arc4random_buf ARE in iOS's libSystem, and
+                  HAVE_GETENTROPY/HAVE_ARC4RANDOM_BUF stay defined, so the
+                  CSPRNG is unchanged
+     net/route.h, sys/ptrace.h, security/pam_appl.h
+                  reached only from servconf.c, platform-tracing.c and the PAM
+                  code, none of which this client build compiles
+   Leaving them defined broke the iOS build at includes.h:70 and misc.c:36. */
+/* #undef HAVE_NLIST_H */
 
 /* Define to 1 if you have the `nl_langinfo' function. */
 #define HAVE_NL_LANGINFO 1
@@ -1195,7 +1216,7 @@
 /* #undef HAVE_SECUREWARE */
 
 /* Define to 1 if you have the <security/pam_appl.h> header file. */
-#define HAVE_SECURITY_PAM_APPL_H 1
+/* #undef HAVE_SECURITY_PAM_APPL_H */
 
 /* Define to 1 if you have the `sendmsg' function. */
 #define HAVE_SENDMSG 1
@@ -1522,10 +1543,10 @@
 /* #undef HAVE_SYS_PTMS_H */
 
 /* Define to 1 if you have the <sys/ptrace.h> header file. */
-#define HAVE_SYS_PTRACE_H 1
+/* #undef HAVE_SYS_PTRACE_H */
 
 /* Define to 1 if you have the <sys/random.h> header file. */
-#define HAVE_SYS_RANDOM_H 1
+/* #undef HAVE_SYS_RANDOM_H */
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1
@@ -1672,7 +1693,7 @@
 #define HAVE_UTMPX_H 1
 
 /* Define to 1 if you have the <utmp.h> header file. */
-#define HAVE_UTMP_H 1
+/* #undef HAVE_UTMP_H */
 
 /* define if you have u_char data type */
 #define HAVE_U_CHAR 1
