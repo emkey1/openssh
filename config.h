@@ -1164,10 +1164,18 @@
 #define HAVE_RAISE 1
 
 /* Define to 1 if you have the `readpassphrase' function. */
-#define HAVE_READPASSPHRASE 1
+/* iSH-AOK: undefined by hand. The host HAS readpassphrase(), which is exactly
+   why it must not be used: it opens the MAC's /dev/tty and drives the host's
+   termios, while a native program's terminal is the GUEST's. The visible
+   result was ssh never prompting -- it sent an empty password instantly, three
+   keyboard-interactive attempts and two password attempts, then "Too many
+   authentication failures". Undefining these compiles openbsd-compat's own
+   readpassphrase.c, whose open/read/tcsetattr go through the shim to the
+   guest's tty. Same trap as fileno(), see kernel/native_libc.c. */
+/* #undef HAVE_READPASSPHRASE */
 
 /* Define to 1 if you have the <readpassphrase.h> header file. */
-#define HAVE_READPASSPHRASE_H 1
+/* #undef HAVE_READPASSPHRASE_H */
 
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
