@@ -22,6 +22,36 @@
 char *ssh_get_progname(char *);
 int seed_from_prngd(unsigned char *, size_t);
 
+/* __progname, inside iSH-AOK.
+ *
+ * A native program here is a C function on a guest task's thread inside the
+ * app's ONE address space, not a process, so the host's __progname -- the
+ * symbol libSystem fills in at startup -- names the APP. Reading it is why
+ * sftp printed "usage: ish [...]" and ssh printed "ish: Could not resolve
+ * hostname". Writing it, which every entry point does via
+ * `__progname = ssh_get_progname(argv[0])`, is the worse half: that stores
+ * into libSystem's global, so a correct value would have renamed the app
+ * itself and two concurrent applets would have overwritten each other. Same
+ * lesson as the three config.h defines in the previous commit -- being true of
+ * the host is exactly WHY it cannot be left to the host.
+ *
+ * So __progname becomes ours and per task. The accessor hands back the address
+ * of a thread-local, which keeps `__progname` an lvalue, so the assignment at
+ * each entry point still works untouched.
+ *
+ * It is a function rather than a plain `extern __thread char *` for the sake
+ * of the ~20 `extern char *__progname;` lines in the sources: against a
+ * variable they would each need editing (a non-thread-local redeclaration of a
+ * thread-local is an error), while against this they expand to
+ * `extern char *(*ssh_prognamep());`, a compatible old-style redeclaration of
+ * the accessor itself. Nothing else has to change, including in the files this
+ * build currently excludes. Same shape, and the same reason, as the kernel's
+ * nlibc_optindp() for optind.
+ */
+char **ssh_prognamep(void);
+#undef __progname
+#define __progname (*ssh_prognamep())
+
 #ifndef HAVE_SETSID
 #define setsid() setpgrp(0, getpid())
 #endif /* !HAVE_SETSID */
