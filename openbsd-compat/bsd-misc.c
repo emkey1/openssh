@@ -31,9 +31,20 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef HAVE___PROGNAME
-char *__progname;
-#endif
+/* The storage behind __progname; see openbsd-compat/bsd-misc.h for why it is
+ * ours and per task rather than libSystem's. "ssh" is only what a thread
+ * starts out holding -- every entry point overwrites it with
+ * ssh_get_progname(argv[0]) before it logs anything -- but it is a real name
+ * rather than NULL, so a read on some path that never got that far prints
+ * something sane instead of faulting. log.c's `argv0 != NULL ? argv0 :
+ * __progname` is the read that would otherwise have to trust it. */
+static __thread char *ssh_progname_tls = "ssh";
+
+char **
+ssh_prognamep(void)
+{
+	return &ssh_progname_tls;
+}
 
 /*
  * NB. duplicate __progname in case it is an alias for argv[0]
@@ -42,19 +53,28 @@ char *__progname;
 char *ssh_get_progname(char *argv0)
 {
 	char *p, *q;
-#ifdef HAVE___PROGNAME
-	extern char *__progname;
 
-	p = __progname;
-#else
-	if (argv0 == NULL)
-		return ("unknown");	/* XXX */
-	p = strrchr(argv0, '/');
-	if (p == NULL)
-		p = argv0;
-	else
-		p++;
-#endif
+	/* argv0 first, and never the HAVE___PROGNAME branch this used to take.
+	 * That define is accurate -- the host does have a __progname -- and it
+	 * is precisely that accuracy which made it wrong: inside iSH-AOK the
+	 * host's copy holds the app's name, so every applet introduced itself
+	 * as "ish" while faithfully asking the right question of the wrong
+	 * process. The portable branch was correct for us all along; it was
+	 * simply unreachable. HAVE___PROGNAME is left defined in config.h
+	 * because it is a true statement about the host, and nothing now reads
+	 * it. */
+	if (argv0 != NULL) {
+		p = strrchr(argv0, '/');
+		if (p == NULL)
+			p = argv0;
+		else
+			p++;
+	} else {
+		p = __progname;		/* ours and per task, not the host's */
+	}
+	if (p == NULL || *p == '\0')
+		p = "unknown";		/* XXX */
+
 	if ((q = strdup(p)) == NULL) {
 		perror("strdup");
 		exit(1);
