@@ -45,7 +45,7 @@
 #include "canohost.h"
 #include "uidswap.h"
 
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 extern int saved_argc;
 extern char **saved_argv;
 

@@ -43,7 +43,7 @@
 #include "auth.h"
 
 /* import */
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or

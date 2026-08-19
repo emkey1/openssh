@@ -159,8 +159,8 @@ __thread struct sshbuf *command;
 static __thread int forward_confirms_pending = -1;
 
 /* mux.c */
-__thread extern int muxserver_sock;
-__thread extern u_int muxclient_command;
+extern __thread int muxserver_sock;
+extern __thread u_int muxclient_command;
 
 /* Prints a help message to the user.  This function never returns. */
 

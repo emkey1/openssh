@@ -110,23 +110,23 @@
 extern char *__progname;
 
 /* import options */
-__thread extern Options options;
+extern __thread Options options;
 
 /* Control socket */
-__thread extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
+extern __thread int muxserver_sock; /* XXX use mux_client_cleanup() instead */
 
 /*
  * Name of the host we are connecting to.  This is the name given on the
  * command line, or the Hostname specified for the user-supplied name in a
  * configuration file.
  */
-__thread extern char *host;
+extern __thread char *host;
 
 /*
  * If this field is not NULL, the ForwardAgent socket is this path and different
  * instead of SSH_AUTH_SOCK.
  */
-__thread extern char *forward_agent_sock_path;
+extern __thread char *forward_agent_sock_path;
 
 /*
  * Flag to indicate that we have received a window change signal which has

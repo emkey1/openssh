@@ -51,11 +51,11 @@
 #include "clientloop.h"
 
 /* from ssh.c */
-__thread extern int tty_flag;
-__thread extern Options options;
-__thread extern char *host;
-__thread extern struct sshbuf *command;
-__thread extern volatile sig_atomic_t quit_pending;
+extern __thread int tty_flag;
+extern __thread Options options;
+extern __thread char *host;
+extern __thread struct sshbuf *command;
+extern __thread volatile sig_atomic_t quit_pending;
 
 /* Context for session open confirmation callback */
 struct mux_session_confirm_ctx {

@@ -44,7 +44,7 @@
 
 #include "ssh-gss.h"
 
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 
 #ifdef HEIMDAL
 # include <krb5.h>

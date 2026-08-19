@@ -46,7 +46,7 @@
 #include "servconf.h"
 
 /* import */
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 extern struct authmethod_cfg methodcfg_passwd;
 
 static int
