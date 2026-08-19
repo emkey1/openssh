@@ -136,9 +136,9 @@ static void do_authenticated2(struct ssh *, Authctxt *);
 static int session_pty_req(struct ssh *, Session *);
 
 /* import */
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 extern char *__progname;
-__thread extern int debug_flag;
+extern __thread int debug_flag;
 extern struct sshbuf *loginmsg;
 extern struct sshauthopt *auth_opts;
 extern char *tun_fwd_ifnames; /* serverloop.c */

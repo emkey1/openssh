@@ -77,7 +77,7 @@
 #include "serverloop.h"
 #include "ssherr.h"
 
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 
 /* XXX */
 extern Authctxt *the_authctxt;

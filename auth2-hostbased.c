@@ -53,7 +53,7 @@
 #include "match.h"
 
 /* import */
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 extern struct authmethod_cfg methodcfg_hostbased;
 
 static int
