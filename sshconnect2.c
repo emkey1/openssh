@@ -80,7 +80,7 @@
 #endif
 
 /* import */
-__thread extern Options options;
+extern __thread Options options;
 
 /*
  * SSH2 key exchange

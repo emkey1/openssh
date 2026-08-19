@@ -52,7 +52,7 @@
 #include <string.h>
 #include <krb5.h>
 
-__thread extern ServerOptions	 options;
+extern __thread ServerOptions	 options;
 
 static int
 krb5_init(void *context)

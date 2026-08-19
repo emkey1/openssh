@@ -69,8 +69,8 @@ static __thread int matching_host_key_dns = 0;
 static __thread pid_t proxy_command_pid = 0;
 
 /* import */
-__thread extern int debug_flag;
-__thread extern Options options;
+extern __thread int debug_flag;
+extern __thread Options options;
 extern char *__progname;
 
 static int show_other_keys(struct hostkeys *, struct sshkey *);

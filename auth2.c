@@ -60,7 +60,7 @@
 #include "kex.h"
 
 /* import */
-__thread extern ServerOptions options;
+extern __thread ServerOptions options;
 extern struct sshbuf *loginmsg;
 
 /* methods */
