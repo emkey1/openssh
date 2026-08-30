@@ -2410,9 +2410,64 @@ connect_to_server(char *path, char **args, int *in, int *out)
 	FD_CLOSEONEXEC(*in);
 	FD_CLOSEONEXEC(*out);
 
+#ifdef KERNEL_NATIVE_LIBC_H
+	/*
+	 * iSH-AOK: posix_spawn rather than fork+exec -- a natively-dispatched
+	 * program is a function call inside the host process, so nlibc_fork is
+	 * an unconditional ENOSYS and this was "sftp: fork: Function not
+	 * implemented" for every remote session. Same conversion as scp.c's
+	 * do_cmd; see the comment there.
+	 *
+	 * void * rather than posix_spawn_file_actions_t because <spawn.h> is
+	 * not reliably reachable here (SmallCLUE ships its own src/spawn.h);
+	 * the shim declares the family as void **, which is Darwin's typedef.
+	 */
+	{
+		void *fa;
+		int spawn_err;
+		sshsig_t prev_int;
+
+		/*
+		 * The child ignored SIGINT so that an interrupted command does
+		 * not kill the underlying ssh. There is no child context to do
+		 * that in, but an IGNORED disposition survives exec -- so set
+		 * it here and put it back straight after. The parent installs
+		 * its own killchild handler a few lines below either way.
+		 * SIGTERM needs nothing: it is still default at this point,
+		 * which is what the child wanted.
+		 */
+		prev_int = ssh_signal(SIGINT, SIG_IGN);
+		spawn_err = posix_spawn_file_actions_init(&fa);
+		if (spawn_err != 0)
+			fatal("posix_spawn_file_actions_init: %s",
+			    strerror(spawn_err));
+		posix_spawn_file_actions_adddup2(&fa, c_in, STDIN_FILENO);
+		posix_spawn_file_actions_adddup2(&fa, c_out, STDOUT_FILENO);
+		/*
+		 * Each close only once: with a socketpair *in == *out and
+		 * c_in == c_out, and a file action that fails makes the whole
+		 * spawn fail -- unlike the bare close() the child used, where
+		 * a second EBADF was harmless.
+		 */
+		posix_spawn_file_actions_addclose(&fa, *in);
+		if (*out != *in)
+			posix_spawn_file_actions_addclose(&fa, *out);
+		if (c_in != *in && c_in != *out)
+			posix_spawn_file_actions_addclose(&fa, c_in);
+		if (c_out != c_in && c_out != *in && c_out != *out)
+			posix_spawn_file_actions_addclose(&fa, c_out);
+		spawn_err = posix_spawnp(&sshpid, path, &fa, NULL, args, environ);
+		posix_spawn_file_actions_destroy(&fa);
+		ssh_signal(SIGINT, prev_int);
+		if (spawn_err != 0)
+			fatal("posix_spawnp: %s", strerror(spawn_err));
+	}
+	if (0) {
+#else
 	if ((sshpid = fork()) == -1)
 		fatal("fork: %s", strerror(errno));
 	else if (sshpid == 0) {
+#endif
 		if ((dup2(c_in, STDIN_FILENO) == -1) ||
 		    (dup2(c_out, STDOUT_FILENO) == -1)) {
 			fprintf(stderr, "dup2: %s\n", strerror(errno));
