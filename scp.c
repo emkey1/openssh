@@ -223,6 +223,25 @@ suspchild(int signo)
 	errno = save_errno;
 }
 
+/*
+ * iSH-AOK: a natively-dispatched program runs as a function call inside the
+ * host process, so there is no fork() to have -- kernel/native_libc.c's
+ * nlibc_fork is an unconditional ENOSYS, and every remote copy died on
+ * "scp: fork: Function not implemented". posix_spawn is the shim's documented
+ * answer to that (see the comment on the family in kernel/native_libc.h), and
+ * it expresses everything these children did: redirect a descriptor or two,
+ * close the rest, exec.
+ *
+ * Guarded so the tree still builds against an ordinary libc, and spelled with
+ * void * rather than posix_spawn_file_actions_t because <spawn.h> deliberately
+ * is not reachable here: SmallCLUE ships its own src/spawn.h and its include
+ * path can come first. The shim declares the family as void **, which is what
+ * Darwin's typedefs are.
+ */
+#ifdef KERNEL_NATIVE_LIBC_H
+# define SCP_SPAWN_OBJ void *
+#endif
+
 static int
 do_local_cmd(arglist *a)
 {
@@ -239,6 +258,16 @@ do_local_cmd(arglist *a)
 			fmprintf(stderr, " %s", a->list[i]);
 		fprintf(stderr, "\n");
 	}
+#ifdef KERNEL_NATIVE_LIBC_H
+	{
+		int spawn_err = posix_spawnp(&pid, a->list[0], NULL, NULL,
+		    a->list, environ);
+
+		if (spawn_err != 0)
+			fatal("do_local_cmd: posix_spawnp: %s",
+			    strerror(spawn_err));
+	}
+#else
 	if ((pid = fork()) == -1)
 		fatal("do_local_cmd: fork: %s", strerror(errno));
 
@@ -247,6 +276,7 @@ do_local_cmd(arglist *a)
 		perror(a->list[0]);
 		exit(1);
 	}
+#endif
 
 	do_cmd_pid = pid;
 	ssh_signal(SIGTERM, killchild);
@@ -303,6 +333,59 @@ do_cmd(char *program, char *host, char *remuser, int port, int subsystem,
 	ssh_signal(SIGTTIN, suspchild);
 	ssh_signal(SIGTTOU, suspchild);
 
+#ifdef KERNEL_NATIVE_LIBC_H
+	/*
+	 * The argument list is built HERE rather than in the child, because
+	 * there is no child context to build it in. addargs only appends to
+	 * the local arglist, so hoisting it changes nothing else.
+	 */
+	replacearg(&args, 0, "%s", program);
+	if (port != -1) {
+		addargs(&args, "-p");
+		addargs(&args, "%d", port);
+	}
+	if (remuser != NULL) {
+		addargs(&args, "-l");
+		addargs(&args, "%s", remuser);
+	}
+	if (subsystem)
+		addargs(&args, "-s");
+	addargs(&args, "--");
+	addargs(&args, "%s", host);
+	addargs(&args, "%s", cmd);
+	{
+		SCP_SPAWN_OBJ fa;
+		int spawn_err = posix_spawn_file_actions_init(&fa);
+
+		if (spawn_err != 0)
+			fatal("posix_spawn_file_actions_init: %s",
+			    strerror(spawn_err));
+		/*
+		 * File actions run in order, so each dup2 happens while its
+		 * source is still open and the closes below only drop the
+		 * now-redundant descriptors -- exactly what the child did.
+		 */
+#ifdef USE_PIPES
+		posix_spawn_file_actions_adddup2(&fa, pin[0], STDIN_FILENO);
+		posix_spawn_file_actions_adddup2(&fa, pout[1], STDOUT_FILENO);
+		posix_spawn_file_actions_addclose(&fa, pin[0]);
+		posix_spawn_file_actions_addclose(&fa, pin[1]);
+		posix_spawn_file_actions_addclose(&fa, pout[0]);
+		posix_spawn_file_actions_addclose(&fa, pout[1]);
+#else
+		posix_spawn_file_actions_adddup2(&fa, sv[0], STDIN_FILENO);
+		posix_spawn_file_actions_adddup2(&fa, sv[0], STDOUT_FILENO);
+		posix_spawn_file_actions_addclose(&fa, sv[0]);
+		posix_spawn_file_actions_addclose(&fa, sv[1]);
+#endif
+		spawn_err = posix_spawnp(pid, program, &fa, NULL,
+		    args.list, environ);
+		posix_spawn_file_actions_destroy(&fa);
+		if (spawn_err != 0)
+			fatal("posix_spawnp: %s", strerror(spawn_err));
+	}
+	{
+#else
 	/* Fork a child to execute the command on the remote host using ssh. */
 	*pid = fork();
 	switch (*pid) {
@@ -348,6 +431,7 @@ do_cmd(char *program, char *host, char *remuser, int port, int subsystem,
 		perror(program);
 		_exit(1);
 	default:
+#endif
 		/* Parent.  Close the other side, and return the local side. */
 #ifdef USE_PIPES
 		close(pin[0]);
@@ -387,6 +471,37 @@ do_cmd2(char *host, char *remuser, int port, char *cmd,
 	if (port == -1)
 		port = sshport;
 
+#ifdef KERNEL_NATIVE_LIBC_H
+	/* iSH-AOK: posix_spawn instead of fork+exec; see do_local_cmd above. */
+	replacearg(&args, 0, "%s", ssh_program);
+	if (port != -1) {
+		addargs(&args, "-p");
+		addargs(&args, "%d", port);
+	}
+	if (remuser != NULL) {
+		addargs(&args, "-l");
+		addargs(&args, "%s", remuser);
+	}
+	addargs(&args, "-oBatchMode=yes");
+	addargs(&args, "--");
+	addargs(&args, "%s", host);
+	addargs(&args, "%s", cmd);
+	{
+		SCP_SPAWN_OBJ fa;
+		int spawn_err = posix_spawn_file_actions_init(&fa);
+
+		if (spawn_err != 0)
+			fatal("posix_spawn_file_actions_init: %s",
+			    strerror(spawn_err));
+		posix_spawn_file_actions_adddup2(&fa, fdin, 0);
+		posix_spawn_file_actions_adddup2(&fa, fdout, 1);
+		spawn_err = posix_spawnp(&pid, ssh_program, &fa, NULL,
+		    args.list, environ);
+		posix_spawn_file_actions_destroy(&fa);
+		if (spawn_err != 0)
+			fatal("posix_spawnp: %s", strerror(spawn_err));
+	}
+#else
 	/* Fork a child to execute the command on the remote host using ssh. */
 	pid = fork();
 	if (pid == 0) {
@@ -415,6 +530,7 @@ do_cmd2(char *host, char *remuser, int port, char *cmd,
 	} else if (pid == -1) {
 		fatal("fork: %s", strerror(errno));
 	}
+#endif
 	while (waitpid(pid, &status, 0) == -1)
 		if (errno != EINTR)
 			fatal("do_cmd2: waitpid: %s", strerror(errno));
