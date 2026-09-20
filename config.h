@@ -388,6 +388,7 @@
 
 /* Define to 1 if you have the declaration of `htole64', and to 0 if you
    don't. */
+#define HAVE_DECL_HTOBE32 0
 #define HAVE_DECL_HTOLE64 0
 
 /* Define to 1 if you have the declaration of `h_errno', and to 0 if you
