@@ -22,6 +22,13 @@
 
 #include <sandbox.h>
 
+/*
+ * The macOS 27 SDK's <sandbox.h> no longer declares the kSBXProfile*
+ * constants, though libsystem_sandbox still exports them, so say what the
+ * earlier SDKs said. A compatible redeclaration is harmless where they do.
+ */
+extern const char kSBXProfilePureComputation[];
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
