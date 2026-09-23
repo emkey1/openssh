@@ -179,6 +179,7 @@ void	auth_failure_delay(Authctxt *, double);
 
 char	*auth2_read_banner(void);
 int	 auth2_methods_valid(const char *, int);
+int	 auth2_method_enabled(const struct authmethod_cfg *);
 int	 auth2_update_methods_lists(Authctxt *, const char *, const char *);
 int	 auth2_setup_methods_lists(Authctxt *);
 int	 auth2_method_allowed(Authctxt *, const char *, const char *);

@@ -506,8 +506,7 @@ authmethods_get(Authctxt *authctxt)
 	for (i = 0; authmethods[i] != NULL; i++) {
 		if (strcmp(authmethods[i]->cfg->name, "none") == 0)
 			continue;
-		if (authmethods[i]->cfg->enabled == NULL ||
-		    *(authmethods[i]->cfg->enabled) == 0)
+		if (!auth2_method_enabled(authmethods[i]->cfg))
 			continue;
 		if (!auth2_method_allowed(authctxt, authmethods[i]->cfg->name,
 		    NULL))
@@ -547,7 +546,7 @@ authmethod_lookup(Authctxt *authctxt, const char *name)
 	if ((method = authmethod_byname(name)) == NULL)
 		return NULL;
 
-	if (method->cfg->enabled == NULL || *(method->cfg->enabled) == 0) {
+	if (!auth2_method_enabled(method->cfg)) {
 		debug3_f("method %s not enabled", name);
 		return NULL;
 	}
