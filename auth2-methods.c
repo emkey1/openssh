@@ -44,32 +44,41 @@ struct authmethod_cfg methodcfg_none = {
 	NULL,
 	&none_enabled
 };
+/*
+ * iSH-AOK: the `enabled` pointers below were &options.something upstream.
+ * `options` is thread-local now, and the address of a thread-local is not a
+ * compile-time constant, so they are NULL here and auth2_method_enabled()
+ * looks them up in the calling thread's options instead. sshconnect2.c's
+ * authmethods[] fills its pointers in once per thread, but that table is
+ * thread-local itself; these structs are shared, and auth2-*.c take their
+ * addresses in static initializers of their own, so they cannot be.
+ */
 struct authmethod_cfg methodcfg_pubkey = {
 	"publickey",
 	"publickey-hostbound-v00@openssh.com",
-	&options.pubkey_authentication
+	NULL		/* &options.pubkey_authentication */
 };
 #ifdef GSSAPI
 struct authmethod_cfg methodcfg_gssapi = {
 	"gssapi-with-mic",
 	NULL,
-	&options.gss_authentication
+	NULL		/* &options.gss_authentication */
 };
 #endif
 struct authmethod_cfg methodcfg_passwd = {
 	"password",
 	NULL,
-	&options.password_authentication
+	NULL		/* &options.password_authentication */
 };
 struct authmethod_cfg methodcfg_kbdint = {
 	"keyboard-interactive",
 	NULL,
-	&options.kbd_interactive_authentication
+	NULL		/* &options.kbd_interactive_authentication */
 };
 struct authmethod_cfg methodcfg_hostbased = {
 	"hostbased",
 	NULL,
-	&options.hostbased_authentication
+	NULL		/* &options.hostbased_authentication */
 };
 
 static struct authmethod_cfg *authmethod_cfgs[] = {
@@ -83,6 +92,31 @@ static struct authmethod_cfg *authmethod_cfgs[] = {
 	&methodcfg_hostbased,
 	NULL
 };
+
+/*
+ * Whether a method is enabled in the calling thread's configuration. Ask this
+ * rather than reading cfg->enabled, which is NULL for every method whose flag
+ * lives in `options` -- see the comment above methodcfg_pubkey.
+ */
+int
+auth2_method_enabled(const struct authmethod_cfg *cfg)
+{
+	const int *enabled = cfg->enabled;
+
+	if (cfg == &methodcfg_pubkey)
+		enabled = &options.pubkey_authentication;
+#ifdef GSSAPI
+	else if (cfg == &methodcfg_gssapi)
+		enabled = &options.gss_authentication;
+#endif
+	else if (cfg == &methodcfg_passwd)
+		enabled = &options.password_authentication;
+	else if (cfg == &methodcfg_kbdint)
+		enabled = &options.kbd_interactive_authentication;
+	else if (cfg == &methodcfg_hostbased)
+		enabled = &options.hostbased_authentication;
+	return enabled != NULL && *enabled != 0;
+}
 
 /*
  * Check a comma-separated list of methods for validity. If need_enable is
@@ -110,8 +144,7 @@ auth2_methods_valid(const char *_methods, int need_enable)
 			if (strcmp(method, cfg->name) != 0)
 				continue;
 			if (need_enable) {
-				if (cfg->enabled == NULL ||
-				    *(cfg->enabled) == 0) {
+				if (!auth2_method_enabled(cfg)) {
 					error("Disabled method \"%s\" in "
 					    "AuthenticationMethods list \"%s\"",
 					    method, _methods);
