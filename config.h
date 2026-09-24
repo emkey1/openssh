@@ -214,7 +214,10 @@
 #define HAVE_ARC4RANDOM_BUF 1
 
 /* Define to 1 if you have the `arc4random_stir' function. */
-#define HAVE_ARC4RANDOM_STIR 1
+/* AOK: Darwin-only; see the note at HAVE_STRTONUM. */
+#if !defined(__linux__)
+# define HAVE_ARC4RANDOM_STIR 1
+#endif
 
 /* Define to 1 if you have the `arc4random_uniform' function. */
 #define HAVE_ARC4RANDOM_UNIFORM 1
@@ -1466,7 +1469,14 @@
  *                                         guarded by #ifndef HAVE_* -- so
  *                                         claiming them here is what stops them
  *                                         being compiled.
+ *   arc4random_stir                       glibc 2.36 added arc4random, _buf and
+ *                                         _uniform, but never _stir;
+ *                                         openbsd-compat.h makes it a no-op.
  *   <util.h>                              BSD's; Linux keeps openpty in <pty.h>.
+ *                                         packet.c, readconf.c, scp.c and
+ *                                         sftp.c include it regardless, so
+ *                                         iSH-AOK's Linux-only include
+ *                                         directory supplies an empty one.
  *   pw_change / pw_class / pw_expire      BSD fields; glibc's struct passwd has
  *                                         none of them.
  *   SOCK_HAS_LEN                          sockaddr_in.sin_len is a BSD field.
